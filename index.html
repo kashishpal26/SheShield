@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SheShield – Women Safety Companion</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4b2a8a">
+<style>
+:root{--p:#4b2a8a;--p2:#6d44c9;--bg:#f6f2fd;--card:#fff;--red:#d92b4b;--ok:#1f9d63;--tx:#1d1533;--mu:#6b6384}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:84px}
+header{background:var(--p);color:#fff;padding:18px 20px;border-radius:0 0 22px 22px}
+header h1{font-size:20px}header p{font-size:12px;opacity:.8;margin-top:2px}
+.tab{display:none;padding:18px}.tab.on{display:block}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(75,42,138,.08)}
+h2{font-size:16px;margin-bottom:8px}.mu{color:var(--mu);font-size:13px}
+.sos{display:block;margin:10px auto 6px;width:190px;height:190px;border-radius:50%;border:none;background:radial-gradient(circle at 35% 30%,#ff5a78,var(--red));color:#fff;font-size:42px;font-weight:800;box-shadow:0 0 0 12px rgba(217,43,75,.15),0 8px 24px rgba(217,43,75,.5);animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 22px rgba(217,43,75,.08),0 8px 24px rgba(217,43,75,.5)}}
+.btn{border:none;border-radius:12px;padding:12px 16px;font-size:15px;font-weight:600;background:var(--p);color:#fff;width:100%;margin-top:8px;cursor:pointer;display:block;text-align:center;text-decoration:none}
+.btn.alt{background:#ece6fa;color:var(--p)}.btn.red{background:var(--red)}.btn.ok{background:var(--ok)}
+input,select{width:100%;padding:11px;border:1.5px solid #ddd5f3;border-radius:10px;font-size:15px;margin-top:6px;background:#fff}
+.row{display:flex;gap:8px}.row>*{flex:1}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;display:flex;border-top:1px solid #e6def7;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:none;background:none;padding:10px 0 8px;font-size:11px;color:var(--mu)}
+nav button span{display:block;font-size:20px}nav button.on{color:var(--p);font-weight:700}
+.overlay{position:fixed;inset:0;display:none;z-index:50;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff}
+.overlay.on{display:flex}
+#cd{background:var(--red)}#cd .n{font-size:120px;font-weight:800}
+#alert{background:#2a0f1c;justify-content:flex-start;overflow:auto;padding-top:40px}
+#call{background:#111;justify-content:space-between;padding:70px 24px 60px}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;background:#ece6fa;color:var(--p);margin:2px}
+.contact{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+.contact button{border:none;background:none;color:var(--red);font-size:18px}
+.live{font-size:12px;word-break:break-all;background:#1f1020;border-radius:8px;padding:8px;margin:8px 0;width:100%;text-align:left}
+.timer{font-size:48px;font-weight:800;text-align:center;color:var(--p);margin:8px 0}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px;animation:pulse 1s infinite}
+.log{font-size:13px;padding:8px 0;border-bottom:1px solid #eee}
+</style>
+</head>
+<body>
+<header><h1>🛡️ SheShield</h1><p>Your safety companion — one tap, trusted contacts, live location, evidence.</p></header>
+
+<!-- SOS -->
+<section class="tab on" id="t-sos">
+  <div class="card" style="text-align:center">
+    <h2>Emergency SOS</h2>
+    <p class="mu">Tap once. 5-second cancel window, then your contacts get your live location, a siren sounds and audio evidence starts recording.</p>
+    <button class="sos" onclick="startCountdown('Manual SOS pressed')">SOS</button>
+    <p class="mu" id="status"></p>
+    <label class="mu" style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px"><input type="checkbox" id="shake" style="width:auto;margin:0" onchange="toggleShake(this.checked)"> Shake phone 3× to trigger SOS</label>
+  </div>
+  <div class="card"><h2>Recent incidents</h2><div id="log"><p class="mu">No incidents yet.</p></div></div>
+</section>
+
+<!-- JOURNEY -->
+<section class="tab" id="t-journey">
+  <div class="card">
+    <h2>Safe Journey Check-in</h2>
+    <p class="mu">Set a timer for your trip. If you don't tap "I'm safe" in time, SOS is triggered automatically.</p>
+    <div id="jset">
+      <input id="jdest" placeholder="Where are you going? (e.g. Hostel → Bus stand)">
+      <select id="jmin"><option value="0.25">15 seconds (demo)</option><option value="10">10 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select>
+      <button class="btn" onclick="startJourney()">Start journey</button>
+    </div>
+    <div id="jrun" style="display:none">
+      <p class="mu" id="jinfo"></p><div class="timer" id="jtime">00:00</div>
+      <button class="btn ok" onclick="endJourney(true)">✅ I'm safe — reached</button>
+      <button class="btn alt" onclick="extendJourney()">+10 min</button>
+    </div>
+  </div>
+</section>
+
+<!-- FAKE CALL -->
+<section class="tab" id="t-fake">
+  <div class="card">
+    <h2>Fake Call</h2>
+    <p class="mu">Escape an uncomfortable situation. A realistic incoming call rings and a voice talks to you when you answer.</p>
+    <input id="fname" value="Mom" placeholder="Caller name">
+    <select id="fdelay"><option value="0">Ring now</option><option value="10" selected>In 10 seconds</option><option value="30">In 30 seconds</option></select>
+    <button class="btn" onclick="scheduleFake()">Schedule fake call</button>
+    <p class="mu" id="fstat" style="margin-top:8px"></p>
+  </div>
+</section>
+
+<!-- HELP -->
+<section class="tab" id="t-help">
+  <div class="card"><h2>Emergency helplines (India)</h2>
+    <a class="btn red" href="tel:112">📞 112 — Emergency</a>
+    <a class="btn alt" href="tel:1091">1091 — Women Helpline</a>
+    <a class="btn alt" href="tel:181">181 — Women in Distress</a>
+    <a class="btn alt" href="tel:100">100 — Police</a>
+  </div>
+  <div class="card"><h2>Nearby help</h2><p class="mu">Opens maps around your current location.</p>
+    <button class="btn" onclick="nearby('police station')">🚓 Police stations</button>
+    <button class="btn alt" onclick="nearby('hospital')">🏥 Hospitals</button>
+    <button class="btn alt" onclick="nearby('pharmacy open now')">💊 Open pharmacies</button>
+  </div>
+</section>
+
+<!-- CONTACTS -->
+<section class="tab" id="t-contacts">
+  <div class="card"><h2>Trusted contacts</h2>
+    <p class="mu">Stored only on your device. Use number with country code, e.g. 919876543210.</p>
+    <div id="clist"></div>
+    <input id="cname" placeholder="Name"><input id="cnum" placeholder="Phone (with country code)" inputmode="tel">
+    <button class="btn" onclick="addContact()">Add contact</button>
+  </div>
+  <div class="card"><h2>Your safety message</h2><input id="cmsg" onchange="saveMsg()" placeholder="Custom message"><p class="mu" style="margin-top:6px">Live location link is appended automatically.</p></div>
+</section>
+
+<!-- OVERLAYS -->
+<div class="overlay" id="cd"><h2 style="font-size:22px">Sending SOS in…</h2><div class="n" id="cdn">5</div><p id="cdr"></p>
+  <button class="btn" style="background:#fff;color:var(--red);max-width:260px" onclick="cancelCountdown()">CANCEL — I'm okay</button></div>
+<div class="overlay" id="alert"><h2 style="font-size:24px">🚨 SOS ACTIVE</h2>
+  <p style="margin:8px 0;font-size:13px;opacity:.85"><span class="dot"></span><span id="astat">Locating…</span></p>
+  <div class="live" id="alink"></div>
+  <p class="mu" style="color:#e8c9ff;align-self:flex-start">Alert your contacts:</p>
+  <div id="asend" style="width:100%"></div>
+  <a class="btn red" href="tel:112" style="width:100%">📞 Call 112 now</a>
+  <button class="btn alt" style="width:100%" onclick="stopSOS()">I'm safe — stop alert</button>
+  <p class="mu" style="color:#bba;margin-top:10px" id="arec"></p></div>
+<div class="overlay" id="call"><div><p style="opacity:.6">incoming call</p><h1 id="cname2" style="font-size:36px;margin-top:6px">Mom</h1><p id="ctimer" style="opacity:.6;margin-top:6px">mobile</p></div>
+  <div class="row" style="width:100%"><button class="btn red" onclick="endCall()">Decline</button><button class="btn ok" id="accbtn" onclick="acceptCall()">Accept</button></div></div>
+
+<nav>
+  <button class="on" data-t="sos"><span>🆘</span>SOS</button>
+  <button data-t="journey"><span>🧭</span>Journey</button>
+  <button data-t="fake"><span>📞</span>Fake call</button>
+  <button data-t="help"><span>🏥</span>Help</button>
+  <button data-t="contacts"><span>👥</span>Contacts</button>
+</nav>
+
+<script>
+const $=id=>document.getElementById(id);
+const store={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let contacts=store.get('contacts',[]), log=store.get('log',[]);
+let msg=store.get('msg','🚨 EMERGENCY! I need help. Please call me or come immediately. My live location:');
+$('cmsg').value=msg;
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='t-'+b.dataset.t));
+});
+
+/* ---------- Contacts ---------- */
+function renderContacts(){
+  $('clist').innerHTML=contacts.length?contacts.map((c,i)=>`<div class="contact"><div><b>${esc(c.name)}</b><br><span class="mu">+${esc(c.num)}</span></div><button onclick="delContact(${i})">✕</button></div>`).join(''):'<p class="mu">No contacts yet — add at least one.</p>';
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addContact(){
+  const name=$('cname').value.trim(),num=$('cnum').value.replace(/\D/g,'');
+  if(!name||num.length<10)return alert('Enter a name and a valid number with country code.');
+  contacts.push({name,num});store.set('contacts',contacts);$('cname').value=$('cnum').value='';renderContacts();
+}
+function delContact(i){contacts.splice(i,1);store.set('contacts',contacts);renderContacts()}
+function saveMsg(){msg=$('cmsg').value||msg;store.set('msg',msg)}
+
+/* ---------- Location ---------- */
+let pos=null,watchId=null;
+function startWatch(){
+  if(!navigator.geolocation){$('astat').textContent='GPS not available';return}
+  watchId=navigator.geolocation.watchPosition(p=>{pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};updateAlert()},
+    ()=>{$('astat').textContent='Location blocked — allow GPS permission'},{enableHighAccuracy:true,maximumAge:3000});
+}
+const mapLink=()=>pos?`https://maps.google.com/?q=${pos.lat.toFixed(6)},${pos.lng.toFixed(6)}`:'(location unavailable)';
+function fullMsg(){return `${msg} ${mapLink()} — sent ${new Date().toLocaleTimeString()} via SheShield`}
+function updateAlert(){
+  if(!$('alert').classList.contains('on'))return;
+  $('astat').textContent=pos?`Live location updating (±${Math.round(pos.acc)} m)`:'Locating…';
+  $('alink').textContent=fullMsg();
+  $('asend').innerHTML=(contacts.length?contacts:[]).map(c=>`<div class="row" style="margin-bottom:6px"><a class="btn ok" style="margin:0" target="_blank" rel="noopener" href="https://wa.me/${c.num}?text=${encodeURIComponent(fullMsg())}">WhatsApp ${esc(c.name)}</a><a class="btn alt" style="margin:0" href="sms:+${c.num}?body=${encodeURIComponent(fullMsg())}">SMS</a></div>`).join('')||'<p class="mu" style="color:#fbb">Add trusted contacts in the Contacts tab.</p>';
+}
+function nearby(q){
+  const go=p=>window.open(`https://www.google.com/maps/search/${encodeURIComponent(q)}/@${p.lat},${p.lng},15z`,'_blank');
+  if(pos)return go(pos);
+  navigator.geolocation?.getCurrentPosition(p=>go({lat:p.coords.latitude,lng:p.coords.longitude}),()=>window.open(`https://www.google.com/maps/search/${encodeURIComponent(q+' near me')}`,'_blank'));
+}
+
+/* ---------- Siren, vibration, evidence recording ---------- */
+let ac,osc,sirenT,rec,chunks=[],stream;
+function siren(on){
+  if(!on){clearInterval(sirenT);try{osc?.stop()}catch{};osc=null;return}
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();osc=ac.createOscillator();const g=ac.createGain();g.gain.value=.4;osc.type='square';osc.connect(g);g.connect(ac.destination);osc.start();
+    let hi=false;sirenT=setInterval(()=>{hi=!hi;osc.frequency.value=hi?950:600;navigator.vibrate?.([300,100,300])},350)}catch{}
+}
+async function startRec(){
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(stream);rec.ondataavailable=e=>chunks.push(e.data);rec.start(1000);$('arec').textContent='🎙️ Recording audio evidence…'}
+  catch{$('arec').textContent='Mic permission denied — evidence not recorded'}
+}
+function stopRec(){return new Promise(res=>{if(!rec||rec.state==='inactive')return res(null);rec.onstop=()=>{stream?.getTracks().forEach(t=>t.stop());res(chunks.length?URL.createObjectURL(new Blob(chunks,{type:rec.mimeType||'audio/webm'})):null)};rec.stop()})}
+
+/* ---------- SOS flow ---------- */
+let cdT=null,reason='',sosAt=0,evidenceUrl=null;
+function startCountdown(r){
+  if($('cd').classList.contains('on')||$('alert').classList.contains('on'))return;
+  reason=r;let n=5;$('cdn').textContent=n;$('cdr').textContent='Trigger: '+r;$('cd').classList.add('on');navigator.vibrate?.(200);
+  cdT=setInterval(()=>{n--;$('cdn').textContent=n;if(n<=0){clearInterval(cdT);$('cd').classList.remove('on');fireSOS()}},1000);
+}
+function cancelCountdown(){clearInterval(cdT);$('cd').classList.remove('on')}
+function fireSOS(){
+  sosAt=Date.now();$('alert').classList.add('on');$('arec').textContent='';
+  siren(true);startWatch();startRec();updateAlert();
+}
+async function stopSOS(){
+  siren(false);if(watchId!=null)navigator.geolocation.clearWatch(watchId);
+  evidenceUrl=await stopRec();
+  log.unshift({t:sosAt,reason,loc:pos?mapLink():'n/a',audio:evidenceUrl});log=log.slice(0,20);
+  store.set('log',log.map(l=>({...l,audio:null})));
+  $('alert').classList.remove('on');renderLog();
+}
+function renderLog(){
+  if(!log.length)return;
+  $('log').innerHTML=log.map(l=>`<div class="log"><b>${new Date(l.t).toLocaleString()}</b><br>${esc(l.reason)}<br>${l.loc!=='n/a'?`<a href="${l.loc}" target="_blank">📍 location</a> `:''}${l.audio?`<a href="${l.audio}" download="evidence-${l.t}.webm">⬇️ evidence audio</a>`:''}</div>`).join('');
+}
+
+/* ---------- Safe journey ---------- */
+let jEnd=0,jT=null;
+function startJourney(){
+  const m=parseFloat($('jmin').value);jEnd=Date.now()+m*60000;
+  $('jset').style.display='none';$('jrun').style.display='block';$('jinfo').textContent='Heading to: '+($('jdest').value||'destination');
+  jT=setInterval(()=>{const s=Math.max(0,Math.round((jEnd-Date.now())/1000));$('jtime').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+    if(s<=0){endJourney(false);startCountdown('Safe-journey timer expired without check-in')}},500);
+}
+function endJourney(ok){clearInterval(jT);$('jset').style.display='block';$('jrun').style.display='none';if(ok)alert('Great — you reached safely. 💜')}
+function extendJourney(){jEnd+=10*60000}
+
+/* ---------- Fake call ---------- */
+let callT,ringT,callSec=0,callTick;
+function scheduleFake(){
+  const d=parseInt($('fdelay').value);$('fstat').textContent=d?`Call will ring in ${d}s — you can lock the screen.`:'';
+  clearTimeout(callT);callT=setTimeout(ring,d*1000);
+}
+function ring(){
+  $('cname2').textContent=$('fname').value||'Mom';$('ctimer').textContent='mobile';$('accbtn').style.display='';$('call').classList.add('on');
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();let on=true;ringT=setInterval(()=>{if(on){const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=440;g.gain.value=.25;o.connect(g);g.connect(ac.destination);o.start();setTimeout(()=>o.stop(),700)}on=!on;navigator.vibrate?.(400)},900)}catch{}
+}
+function acceptCall(){
+  clearInterval(ringT);$('accbtn').style.display='none';callSec=0;
+  callTick=setInterval(()=>{callSec++;$('ctimer').textContent=`${Math.floor(callSec/60)}:${String(callSec%60).padStart(2,'0')}`},1000);
+  if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance("Hey, where are you? I'm outside waiting for you. Stay where you are, I'm coming to pick you up right now. Are you okay?");u.rate=.95;speechSynthesis.speak(u)}
+}
+function endCall(){clearInterval(ringT);clearInterval(callTick);speechSynthesis?.cancel();$('call').classList.remove('on');$('fstat').textContent=''}
+
+/* ---------- Shake to SOS ---------- */
+let shakes=[],shakeOn=false;
+async function toggleShake(on){
+  if(on&&typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){const r=await DeviceMotionEvent.requestPermission().catch(()=>'denied');if(r!=='granted'){$('shake').checked=false;return}}
+  shakeOn=on;
+}
+addEventListener('devicemotion',e=>{
+  if(!shakeOn)return;const a=e.accelerationIncludingGravity;if(!a)return;
+  if(Math.hypot(a.x||0,a.y||0,a.z||0)>28){const n=Date.now();shakes=shakes.filter(t=>n-t<1500);shakes.push(n);if(shakes.length>=3){shakes=[];startCountdown('Shake gesture detected')}}
+});
+
+renderContacts();renderLog();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

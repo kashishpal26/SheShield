@@ -1,0 +1,8 @@
+{
+  "name": "SheShield",
+  "short_name": "SheShield",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f2fd",
+  "theme_color": "#4b2a8a"
+}
